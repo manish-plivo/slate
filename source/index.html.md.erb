@@ -1,0 +1,985 @@
+---
+TEST COMMIT CHANGE
+title: Plivo Internal APIs
+
+language_tabs:
+  - JSON Response
+
+toc_footers:
+  - <span class="copyright">© 2017 Plivo Inc.</span>
+
+search: true
+---
+
+# Introduction
+
+These are some internal APIs used at Plivo.
+
+You can view JSON response samples in the dark area to the right.
+
+## Authentication
+
+All requests to Plivo API are authenticated with Basic Auth using the account/subaccount AUTH ID and AUTH TOKEN visible at the [dashboard](https://manage.plivo.com/dashboard/).
+<%= image_tag 'auth_id_auth_token.png' %>
+
+## API Response Status
+
+APIs return one of the following HTTP status codes.
+
+<table>
+    <thead>
+        <tr>
+            <th>Status Code</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>200</td>
+            <td>Request has been executed</td>
+        </tr>
+        <tr>
+            <td>201</td>
+            <td>Resource created</td>
+        </tr>
+        <tr>
+            <td>202</td>
+            <td>Resource changed</td>
+        </tr>
+        <tr>
+            <td>204</td>
+            <td>Resource deleted</td>
+        </tr>
+        <tr>
+            <td>400</td>
+            <td>A parameter is missing or is invalid</td>
+        </tr>
+        <tr>
+            <td>401</td>
+            <td>Authentication failed</td>
+        </tr>
+        <tr>
+            <td>404</td>
+            <td>Resource cannot be found</td>
+        </tr>
+        <tr>
+            <td>405</td>
+            <td>HTTP method not allowed</td>
+        </tr>
+        <tr>
+            <td>500</td>
+            <td>Server error</td>
+        </tr>
+    </tbody>
+</table>
+
+# Number & PhoneNumber Internal APIs
+
+The following actions can be performed using the Number/PhoneNumber internal APIs.
+
+## Add number to Inventory
+
+> Success
+
+```json
+{
+    "status": "success",
+    "message": "Number 0123456789 has been added successfully to the inventory"
+}
+```
+
+> Failure
+
+```
+{
+    "status": "failed",
+    "Message": "Exception while saving Number 0123456789 to Phone Inventory",
+    "Reason": "Error Message"
+}
+```
+
+This API lets adding a number to Plivo Phone Inventory.
+
+`POST /api/v1/AddPhoneNumber/`
+
+[Source](https://github.com/plivo/plivocloud/blob/cb70493cd1452f7dc22b97a5dc5620cb29aa661c/plivo_cloud/plivo_api/internal_api.py#L2374)
+
+### Arguments
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>number</td>
+            <td>The number to be added</td>
+        </tr>
+        <tr>
+            <td>number_type</td>
+            <td>This field may be used to categorize between local and tollfree numbers. Default is local.</td>
+        </tr>
+        <tr>
+            <td>sms_enabled</td>
+            <td>Boolean to denote if number is sms enabled</td>
+        </tr>
+        <tr>
+            <td>rented_from_carrier</td>
+            <td>Rented from carrier date</td>
+        </tr>
+        <tr>
+            <td>rate_center</td>
+            <td>Rate Center</td>
+        </tr>
+        <tr>
+            <td>lata</td>
+            <td>Numbers can be searched using <a href="http://en.wikipedia.org/wiki/Local_access_and_transport_area">Local Access and Transport Area</a>. This filter is applicable only for <code>country_iso</code> US and CA.</td>
+        </tr>
+        <tr>
+            <td>prefix</td>
+            <td>This is the area code of the number.</td>
+        </tr>
+        <tr>
+            <td>state</td>
+            <td>Region's state.</td>
+        </tr>
+    </tbody>
+</table>
+
+## Check Source Number
+
+> Success 200
+
+> Failure 404
+
+This API lets check if source number is present in the account.
+
+`GET /api/v1/Internal/Account/{AUTH_ID}/NumberCheck/{SOURCE_NUMBER}/`
+
+[Source](https://github.com/plivo/plivocloud/blob/cb70493cd1452f7dc22b97a5dc5620cb29aa661c/plivo_cloud/plivo_api/internal_api.py#L983)
+
+### Arguments
+
+None
+
+## Get Sandbox Numbers
+
+> Success 200
+
+```
+[
+  "919123456789",
+  "919123456790"
+]
+```
+
+> Failure 404
+
+This API shows sandbox numbers for the account.
+
+`GET /api/v1/Internal/Account/{AUTH_ID}/SandboxNumbers/`
+
+[Source](https://github.com/plivo/plivocloud/blob/cb70493cd1452f7dc22b97a5dc5620cb29aa661c/plivo_cloud/plivo_api/internal_api.py#L997)
+
+### Arguments
+
+None
+
+## Add numbers to Inventory
+
+> Success
+
+```json
+{
+    "message": "The numbers have been added to the inventory",
+    "number": "[0123456789, 1234567890]"
+}
+```
+
+> Failure
+
+```
+{
+    "status": "failure",
+    "message": "Phone number 0123456789 could not be added"
+}
+```
+
+This API lets adding a list of numbers to Plivo Phone Inventory.
+
+`POST /api/v1/Internal/Number/`
+
+[Source](https://github.com/plivo/plivocloud/blob/cb70493cd1452f7dc22b97a5dc5620cb29aa661c/plivo_cloud/plivo_api/add_numbers_to_inventory.py#L35)
+
+### Arguments
+
+A JSON of parameters are accepted.
+<table>
+    <thead>
+        <tr>
+            <th>JSON Parameters</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>numbers</td>
+            <td>List of numbers to be added</td>
+        </tr>
+        <tr>
+            <td>carrier_id</td>
+            <td>The ID of the carrier which is linked to these numbers. This can either be a Plivo carrier or a custom carrier added using the IncomingCarrier API.</td>
+        </tr>
+        <tr>
+            <td>tier</td>
+            <td>Incoming Carrier Tier</td>
+        </tr>
+        <tr>
+            <td>number_type</td>
+            <td>This field may be used to categorize between local and tollfree numbers. Default is local.</td>
+        </tr>
+        <tr>
+            <td>product_plan</td>
+            <td>Product Plan name to be offered to market</td>
+        </tr>
+        <tr>
+            <td>voice_enabled</td>
+            <td>Boolean to denote if numbers are voice enabled</td>
+        </tr>
+        <tr>
+            <td>sms_enabled</td>
+            <td>Boolean to denote if numbers are sms enabled</td>
+        </tr>
+        <tr>
+            <td>region_id</td>
+            <td>The ID of region, with the city and the country these numbers belongs to.</td>
+        </tr>
+        <tr>
+            <td>rate_center</td>
+            <td>Rate Center</td>
+        </tr>
+        <tr>
+            <td>lata</td>
+            <td>Numbers can be searched using <a href="http://en.wikipedia.org/wiki/Local_access_and_transport_area">Local Access and Transport Area</a>. This filter is applicable only for <code>country_iso</code> US and CA.</td>
+        </tr>
+        <tr>
+            <td>username</td>
+            <td>Account's username(from User table)</td>
+        </tr>
+    </tbody>
+</table>
+# Account Credit APIs
+
+BaseURI: `/balanceservice/v1/balance/{account_identifier}`
+
+This service is primarily responsible for maintaining balances.
+Events will be triggered for each create or update activity. These events can be used by other services for audit trail or balance recharge .
+There will be no balance expiry and different service will be responsible for refilling balance.
+When balances are migrated from one type to other, old balance will be expired and new balance will be created.
+At any point of time we will assume that there will be just one active or suspended balance.
+
+## Authentication
+Each API request need to have auth_id and auth_token for basic digest authentication.
+> Authentication Failure Http Status Code: 403
+
+```json
+{
+    "status": "error",
+    "message": "Authentication failed"
+}
+```
+
+## Common Response Format
+
+Each Response will have common format.
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>status </td>
+            <td>Status of the request. It can have three values <code>success</code>, <code>fail</code> or <code>error<code>
+            </td>
+        </tr>
+        <tr>
+            <td>data</td>
+            <td>In case of <code>success</code> status this field will be present with balance object
+            </td>
+        </tr>
+        <tr>
+            <td>message</td>
+            <td>In case of <code>error</code> or <code>fail</code> status, this field will be present with appropriate message.
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+
+## Balance object description
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>balance_tag </td>
+            <td>string</td>
+            <td>Balance can be tagged. Preferably by prepaid or postpaid tags. Length Limit(1-50). Greater length will
+            be trimmed
+            </td>
+        </tr>
+        <tr>
+            <td>amount</td>
+            <td>decimal</td>
+            <td>Balance amount
+            </td>
+        </tr>
+        <tr>
+            <td>topup_amount</td>
+            <td>decimal</td>
+            <td>If account balance goes below threshold limit account, an event will be triggered for low balance and
+            topup amount will be sent in event detail.
+            </td>
+        </tr>
+        <tr>
+            <td>threshold_amount</td>
+            <td>decimal</td>
+            <td>if balance amount goes below threshold amount event will be triggered for low balance
+            </td>
+        </tr>
+        <tr>
+            <td>created</td>
+            <td>string</td>
+            <td>created time of balance
+            </td>
+        </tr>
+        <tr>
+            <td>modified</td>
+            <td>string</td>
+            <td>time when balance was last modified
+            </td>
+        </tr>
+        <tr>
+            <td>status</td>
+            <td>string</td>
+            <td>status of the account balance. Possible values are <code>active</code> Current Active balance.<code>deleted</code> Balance has been deleted.
+            <code>suspended</code> Balance has been suspended temporarily. For an account we expect only one balance to be in active or suspended state.
+            </td>
+        </tr>
+        <tr>
+            <td>account_identifier</td>
+            <td>string</td>
+            <td> Will be used to uniquely identify account.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+## Get Active Balance
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+            "account_identifier": "2345",
+            "balance_tag": "prepaid",
+            "amount": 3456.56,
+            "topup_amount": 200.0,
+            "threshold_amount": 20.0,
+            "status": "active",
+            "created": 1486383249,
+            "modified": 1486383290}
+}
+```
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "account identifier is missing"
+}
+```
+
+> HTTP Status Code:410
+
+```json
+{
+    "status": "error",
+    "message": "no active balance available"
+}
+```
+
+This API fetches active balance for given account
+
+`GET /balanceservice/v1/balance/{account_identifier}/`
+
+
+### Response Attributes
+
+
+<dl>
+    <dt>balance_tag</dt>
+    <dd>string
+    <span> balance tag.
+    </dd>
+
+    <dt>amount</dt>
+    <dd>decimal
+    <span>balance amount</span>
+    </dd>
+
+    <dt>status</dt>
+    <dd>string
+    <span>status of balance.
+    </dd>
+
+    <dt>created</dt>
+    <dd>string
+    <span>creation time of balance</span>
+    </dd>
+
+    <dt>modified</dt>
+    <dd>string
+    <span>modified time of balance</span>
+    </dd>
+
+    <dt>topup_amount</dt>
+    <dd>decimal
+    <span>in case of low balance event this topup amount will be sent out in event </span>
+    </dd>
+    <dt>threshold_amount</dt>
+    <dd>decimal
+    <span>if balance goes below threshold amount, an event will be triggered for low balance</span>
+    </dd>
+    <dt>account_identifier</dt>
+    <dd>string
+    <span>Uniquely identifies the account </span>
+    </dd>
+</dl>
+
+
+## Get Other Balances
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+        "account_identifier": "2345",
+        "balances": [
+            {
+            "balance_tag": "prepaid",
+            "amount": 3456.56,
+            "topup_amount": 400,
+            "threshold_amount": 200,
+            "status": "deleted",
+            "created": 1486383249,
+            "modified": 1486383290},
+            {
+            "balance_tag": "postpaid",
+            "amount": 3456.56,
+            "topup_amount": 2000,
+            "threshold_amount": 0,
+            "status": "deleted",
+            "created": 1486383249,
+            "modified": 1486383290},
+        ]
+     }
+
+
+}
+```
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "account identifier is missing"
+}
+```
+
+This API fetches deleted or suspended balances for given account
+
+`GET /balanceservice/v1/balance/{account_identifier};{status}`
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>status</td>
+            <td> status could be of type <code>deleted</code> or <code>suspended</code>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+### Response Attributes
+
+<dl>
+    <dt>balance_tag</dt>
+    <dd>string
+    <span>tag of balance
+    </dd>
+
+    <dt>amount</dt>
+    <dd>decimal
+    <span>balance amount</span>
+    </dd>
+
+    <dt>status</dt>
+    <dd>string
+    <span>status of balance.
+    </dd>
+
+    <dt>created</dt>
+    <dd>string
+    <span>creation time of balance</span>
+    </dd>
+
+    <dt>modified</dt>
+    <dd>string
+    <span>modified time of balance</span>
+    </dd>
+
+    <dt>topup_amount</dt>
+    <dd>decimal
+    <span>topup amount to be used for low balance event. </span>
+    </dd>
+    <dt>threshold_amount</dt>
+    <dd>decimal
+    <span>if balance goes below threshold amount event will be triggered for low balance</span>
+    </dd>
+
+</dl>
+
+
+
+## Update Balance
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+            "balance": 334.56
+    }
+}
+```
+
+> HTTP Status Code: 200 (insufficient balance)
+
+```json
+{
+    "status": "fail",
+    "data": {
+            "message": "account does not have sufficient balance",
+            "balance": 0.03
+    }
+}
+
+```
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "account is supended"
+}
+```
+
+
+This API updates balance of a account.
+
+`POST /balanceservice/v1/balance/{account_identifier}/`
+
+### Arguments
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>amount (mandatory)</td>
+            <td>amount that need to be updated in active balance. In case of positive value balance will be credited else in case of negative value balance will be debited
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>meta (optional)</td>
+            <td> meta information could be sent which will be forwarded to event call back. Meta will be a dict with three fields.
+            All fields have length restriction. If violated meta info will be dropped.
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Length limit</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+            <tbody>
+            <tr>
+                <td><code>source</code> </td> <td> 0-100</td> <td> This will give source information. Like machine detail </td>
+            </tr>
+            <tr>
+            <td> <code>event</code></td><td> 0-100</td>. <td>This will give event detail like auto_recharge or debit loop</td>
+            </tr>
+            <tr>
+            <td><code>message</code></td> <td>0-1000</td>  <td>Can contain extra information.</td>
+            </tr>
+            </tbody>
+            </table>
+
+            </td>
+
+        </tr>
+    </tbody>
+</table>
+
+
+## Create Balance
+
+> HTTP Status Code: 201
+
+```json
+{
+    "status": "success",
+    "data": {
+            "account_identifier": "2345",
+            "balance_tag": "postpaid",
+            "amount": 3456.56,
+            "topup_amount": 200,
+            "threshold_amount": 20,
+            "status": "active",
+            "created": 1486383249,
+            "modified": 1486383290}
+}
+```
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "fail",
+    "message": "value validation failed"
+}
+```
+
+> HTTP Status Code: 400
+
+
+```json
+{
+    "status": "error",
+    "message": "Missing Field. 'amount' field is mandatory"
+}
+```
+
+
+This API creates an account balance
+
+`PUT balanceservice/v1/balance/{account_identifier}/`
+
+
+### Arguments
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>balance_tag (mandatory)</td>
+            <td>Balance can be tagged. Preferably by prepaid or postpaid tags. Length Limit(1-50). Greater length will
+            be trimmed
+            </td>
+        </tr>
+        <tr>
+            <td>amount</td>
+            <td> Balance amount
+            </td>
+        </tr>
+        <tr>
+            <td>topup_amount</td>
+            <td>once account balance goes below threshold limit. balance_topup event will be triggered containing this amount.
+            Can not be negative.
+            </td>
+        </tr>
+        <tr>
+            <td>threshold_amount</td>
+            <td>if balance goes below threshold amount event will be triggered for low balance. Can not be negative.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+### Response Attributes
+
+<dl>
+    <dt>balance_tag</dt>
+    <dd>string
+    <span>Type of balance.
+    </dd>
+
+    <dt>amount</dt>
+    <dd>decimal
+    <span>balance amount</span>
+    </dd>
+
+    <dt>status</dt>
+    <dd>string
+    <span>status of balance.
+    </dd>
+
+    <dt>created</dt>
+    <dd>string
+    <span>creation time of balance</span>
+    </dd>
+
+    <dt>modified</dt>
+    <dd>string
+    <span>modified time of balance</span>
+    </dd>
+
+    <dt>topup_amount</dt>
+    <dd>decimal
+    <span>topup amount</span>
+    </dd>
+    <dt>threshold_amount</dt>
+    <dd>decimal
+    <span>if balance goes below threshold amount event will be triggered for low balance</span>
+    </dd>
+
+</dl>
+
+## Delete Balance
+
+> HTTP Status Code: 204
+
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "Invalid account_identifier "
+}
+```
+
+This API deletes an account balance
+
+`DELETE balanceservice/v1/balance/{account_identifier}/`
+
+
+## Update Balance Attributes
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+            "account_identifier": "2345",
+            "balance_tag": "prepaid",
+            "amount": 3456.56,
+            "topup_amount": 200,
+            "threshold_amount": 20,
+            "status": "active",
+            "created": 1486383249,
+            "modified": 1486383290}
+}
+```
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "fail",
+    "message": "threshold limit can not be negative"
+}
+```
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "Invalid account_identifier "
+}
+```
+
+This API updates an balance object attributes
+
+`PATCH balanceservice/v1/balance/{account_identifier}/`
+
+### Arguments
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>topup_amount (optional)</td>
+            <td>If included, balance_topup field will be overwritten by new value. Should not be negative
+            </td>
+        </tr>
+        <tr>
+            <td>threshold_amount (optional)</td>
+            <td>Please include this field if it needs to be replaced. if balance goes below threshold amount event will be triggered for low balance
+            </td>
+        </tr>
+        <tr>
+            <td>status (optional)</td>
+            <td>Please include this field if balance need to be suspended. Possible values of status could be <code>suspended</code>
+            </td>
+        </tr>
+        <tr>
+            <td>balance_tag (optional)</td>
+            <td>Balance can be tagged. Preferably by prepaid or postpaid tags. Length Limit(1-50). Greater length will
+            be trimmed
+            </td>
+        </tr>
+        <tr>
+            <td>amount (optional)</td>
+            <td> Balance amount. Balance amount will be overwritten by new value. Please be careful while sending this parameter.
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+## Events
+
+Multiple URLs can be configured. All  generated events will be notified on all of configured urls.
+Events firing will be asynchronus and after 500ms the connection will be closed.
+
+### Event Description
+
+<table>
+    <thead>
+        <tr>
+            <th>Event Type</th>
+            <th>Scenario</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>balance_topup </td>
+            <td> If <code>amount</code> goes below <code>threshold_amount</code> this event will be triggered.
+            </td>
+        </tr>
+        <tr>
+            <td>debit</td>
+            <td> In case of balance debit this event will be triggered with event_status as <code>success</code> or <code>fail</code> depending if debit was success or failure
+            </td>
+        </tr>
+        <tr>
+            <td>credit</td>
+            <td>In case of balance credit this event will be triggered with event_status as <code>success</code> or <code>fail</code> depending if credit was success or failure
+            </td>
+        </tr>
+        <tr>
+            <td>negative_balance </td>
+            <td>This event will be triggered if balance amount becomes non positive.
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+### Arguments
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>type (mandatory)</td>
+            <td> Following event types will be delivered. <code>balance_topup</code>, <code>debit</code>, <code>credit</code>, <code>negative_balance</code>
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>status (optional)</td>
+            <td> Event status can be <code>success</code> or <code>fail</code>. Field will only be sent for <code>debit</code>, <code>credit</code>.
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>balance </td>
+            <td> balance object.
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>meta (optional)</td>
+            <td>meta information gathered from the caller will be forwarded. This field will only be present if it has been sent by requester.
+            Meta will be a dict with three fields.
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Length limit</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+            <tbody>
+            <tr>
+                <td><code>source</code> </td> <td> 0-100</td> <td> This will give source information. Like machine detail </td>
+            </tr>
+            <tr>
+            <td> <code>event</code></td><td> 0-100</td>. <td>This will give event detail like auto_recharge or debit loop</td>
+            </tr>
+            <tr>
+            <td><code>message</code></td> <td>0-1000</td>  <td>Can contain extra information.</td>
+            </tr>
+            </tbody>
+            </table>
+            </td>
+        </tr>
+    </tbody>
+</table>

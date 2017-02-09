@@ -270,3 +270,715 @@ A JSON of parameters are accepted.
         </tr>
     </tbody>
 </table>
+# Account Credit APIs
+
+BaseURI: `/balanceservice/v1/balance/{account_identifier}`
+
+This service is primarily responsible for maintaining balances.
+Events will be triggered for each create or update activity. These events can be used by other services for audit trail or balance recharge .
+There will be no balance expiry and different service will be responsible for refilling balance.
+When balances are migrated from one type to other, old balance will be expired and new balance will be created.
+At any point of time we will assume that there will be just one active or suspended balance.
+
+## Authentication
+Each API request need to have auth_id and auth_token for basic digest authentication.
+> Authentication Failure Http Status Code: 403
+
+```json
+{
+    "status": "error",
+    "message": "Authentication failed"
+}
+```
+
+## Common Response Format
+
+Each Response will have common format.
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>status </td>
+            <td>Status of the request. It can have three values <code>success</code>, <code>fail</code> or <code>error<code>
+            </td>
+        </tr>
+        <tr>
+            <td>data</td>
+            <td>In case of <code>success</code> status this field will be present with balance object
+            </td>
+        </tr>
+        <tr>
+            <td>message</td>
+            <td>In case of <code>error</code> or <code>fail</code> status, this field will be present with appropriate message.
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+
+## Balance object description
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>balance_tag </td>
+            <td>string</td>
+            <td>Balance can be tagged. Preferably by prepaid or postpaid tags. Length Limit(1-50). Greater length will
+            be trimmed
+            </td>
+        </tr>
+        <tr>
+            <td>amount</td>
+            <td>decimal</td>
+            <td>Balance amount
+            </td>
+        </tr>
+        <tr>
+            <td>topup_amount</td>
+            <td>decimal</td>
+            <td>If account balance goes below threshold limit account, an event will be triggered for low balance and
+            topup amount will be sent in event detail.
+            </td>
+        </tr>
+        <tr>
+            <td>threshold_amount</td>
+            <td>decimal</td>
+            <td>if balance amount goes below threshold amount event will be triggered for low balance
+            </td>
+        </tr>
+        <tr>
+            <td>created</td>
+            <td>string</td>
+            <td>created time of balance
+            </td>
+        </tr>
+        <tr>
+            <td>modified</td>
+            <td>string</td>
+            <td>time when balance was last modified
+            </td>
+        </tr>
+        <tr>
+            <td>status</td>
+            <td>string</td>
+            <td>status of the account balance. Possible values are <code>active</code> Current Active balance.<code>deleted</code> Balance has been deleted.
+            <code>suspended</code> Balance has been suspended temporarily. For an account we expect only one balance to be in active or suspended state.
+            </td>
+        </tr>
+        <tr>
+            <td>account_identifier</td>
+            <td>string</td>
+            <td> Will be used to uniquely identify account.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+## Get Active Balance
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+            "account_identifier": "2345",
+            "balance_tag": "prepaid",
+            "amount": 3456.56,
+            "topup_amount": 200.0,
+            "threshold_amount": 20.0,
+            "status": "active",
+            "created": 1486383249,
+            "modified": 1486383290}
+}
+```
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "account identifier is missing"
+}
+```
+
+> HTTP Status Code:410
+
+```json
+{
+    "status": "error",
+    "message": "no active balance available"
+}
+```
+
+This API fetches active balance for given account
+
+`GET /balanceservice/v1/balance/{account_identifier}/`
+
+
+### Response Attributes
+
+
+<dl>
+    <dt>balance_tag</dt>
+    <dd>string
+    <span> balance tag.
+    </dd>
+
+    <dt>amount</dt>
+    <dd>decimal
+    <span>balance amount</span>
+    </dd>
+
+    <dt>status</dt>
+    <dd>string
+    <span>status of balance.
+    </dd>
+
+    <dt>created</dt>
+    <dd>string
+    <span>creation time of balance</span>
+    </dd>
+
+    <dt>modified</dt>
+    <dd>string
+    <span>modified time of balance</span>
+    </dd>
+
+    <dt>topup_amount</dt>
+    <dd>decimal
+    <span>in case of low balance event this topup amount will be sent out in event </span>
+    </dd>
+    <dt>threshold_amount</dt>
+    <dd>decimal
+    <span>if balance goes below threshold amount, an event will be triggered for low balance</span>
+    </dd>
+    <dt>account_identifier</dt>
+    <dd>string
+    <span>Uniquely identifies the account </span>
+    </dd>
+</dl>
+
+
+## Get Other Balances
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+        "account_identifier": "2345",
+        "balances": [
+            {
+            "balance_tag": "prepaid",
+            "amount": 3456.56,
+            "topup_amount": 400,
+            "threshold_amount": 200,
+            "status": "deleted",
+            "created": 1486383249,
+            "modified": 1486383290},
+            {
+            "balance_tag": "postpaid",
+            "amount": 3456.56,
+            "topup_amount": 2000,
+            "threshold_amount": 0,
+            "status": "deleted",
+            "created": 1486383249,
+            "modified": 1486383290},
+        ]
+     }
+
+
+}
+```
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "account identifier is missing"
+}
+```
+
+This API fetches deleted or suspended balances for given account
+
+`GET /balanceservice/v1/balance/{account_identifier};{status}`
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>status</td>
+            <td> status could be of type <code>deleted</code> or <code>suspended</code>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+### Response Attributes
+
+<dl>
+    <dt>balance_tag</dt>
+    <dd>string
+    <span>tag of balance
+    </dd>
+
+    <dt>amount</dt>
+    <dd>decimal
+    <span>balance amount</span>
+    </dd>
+
+    <dt>status</dt>
+    <dd>string
+    <span>status of balance.
+    </dd>
+
+    <dt>created</dt>
+    <dd>string
+    <span>creation time of balance</span>
+    </dd>
+
+    <dt>modified</dt>
+    <dd>string
+    <span>modified time of balance</span>
+    </dd>
+
+    <dt>topup_amount</dt>
+    <dd>decimal
+    <span>topup amount to be used for low balance event. </span>
+    </dd>
+    <dt>threshold_amount</dt>
+    <dd>decimal
+    <span>if balance goes below threshold amount event will be triggered for low balance</span>
+    </dd>
+
+</dl>
+
+
+
+## Update Balance
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+            "balance": 334.56
+    }
+}
+```
+
+> HTTP Status Code: 200 (insufficient balance)
+
+```json
+{
+    "status": "fail",
+    "data": {
+            "message": "account does not have sufficient balance",
+            "balance": 0.03
+    }
+}
+
+```
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "account is supended"
+}
+```
+
+
+This API updates balance of a account.
+
+`POST /balanceservice/v1/balance/{account_identifier}/`
+
+### Arguments
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>amount (mandatory)</td>
+            <td>amount that need to be updated in active balance. In case of positive value balance will be credited else in case of negative value balance will be debited
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>meta (optional)</td>
+            <td> meta information could be sent which will be forwarded to event call back. Meta will be a dict with three fields.
+            All fields have length restriction. If violated meta info will be dropped.
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Length limit</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+            <tbody>
+            <tr>
+                <td><code>source</code> </td> <td> 0-100</td> <td> This will give source information. Like machine detail </td>
+            </tr>
+            <tr>
+            <td> <code>event</code></td><td> 0-100</td>. <td>This will give event detail like auto_recharge or debit loop</td>
+            </tr>
+            <tr>
+            <td><code>message</code></td> <td>0-1000</td>  <td>Can contain extra information.</td>
+            </tr>
+            </tbody>
+            </table>
+
+            </td>
+
+        </tr>
+    </tbody>
+</table>
+
+
+## Create Balance
+
+> HTTP Status Code: 201
+
+```json
+{
+    "status": "success",
+    "data": {
+            "account_identifier": "2345",
+            "balance_tag": "postpaid",
+            "amount": 3456.56,
+            "topup_amount": 200,
+            "threshold_amount": 20,
+            "status": "active",
+            "created": 1486383249,
+            "modified": 1486383290}
+}
+```
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "fail",
+    "message": "value validation failed"
+}
+```
+
+> HTTP Status Code: 400
+
+
+```json
+{
+    "status": "error",
+    "message": "Missing Field. 'amount' field is mandatory"
+}
+```
+
+
+This API creates an account balance
+
+`PUT balanceservice/v1/balance/{account_identifier}/`
+
+
+### Arguments
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>balance_tag (mandatory)</td>
+            <td>Balance can be tagged. Preferably by prepaid or postpaid tags. Length Limit(1-50). Greater length will
+            be trimmed
+            </td>
+        </tr>
+        <tr>
+            <td>amount</td>
+            <td> Balance amount
+            </td>
+        </tr>
+        <tr>
+            <td>topup_amount</td>
+            <td>once account balance goes below threshold limit. balance_topup event will be triggered containing this amount.
+            Can not be negative.
+            </td>
+        </tr>
+        <tr>
+            <td>threshold_amount</td>
+            <td>if balance goes below threshold amount event will be triggered for low balance. Can not be negative.
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+### Response Attributes
+
+<dl>
+    <dt>balance_tag</dt>
+    <dd>string
+    <span>Type of balance.
+    </dd>
+
+    <dt>amount</dt>
+    <dd>decimal
+    <span>balance amount</span>
+    </dd>
+
+    <dt>status</dt>
+    <dd>string
+    <span>status of balance.
+    </dd>
+
+    <dt>created</dt>
+    <dd>string
+    <span>creation time of balance</span>
+    </dd>
+
+    <dt>modified</dt>
+    <dd>string
+    <span>modified time of balance</span>
+    </dd>
+
+    <dt>topup_amount</dt>
+    <dd>decimal
+    <span>topup amount</span>
+    </dd>
+    <dt>threshold_amount</dt>
+    <dd>decimal
+    <span>if balance goes below threshold amount event will be triggered for low balance</span>
+    </dd>
+
+</dl>
+
+## Delete Balance
+
+> HTTP Status Code: 204
+
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "Invalid account_identifier "
+}
+```
+
+This API deletes an account balance
+
+`DELETE balanceservice/v1/balance/{account_identifier}/`
+
+
+## Update Balance Attributes
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "success",
+    "data": {
+            "account_identifier": "2345",
+            "balance_tag": "prepaid",
+            "amount": 3456.56,
+            "topup_amount": 200,
+            "threshold_amount": 20,
+            "status": "active",
+            "created": 1486383249,
+            "modified": 1486383290}
+}
+```
+
+> HTTP Status Code: 200
+
+```json
+{
+    "status": "fail",
+    "message": "threshold limit can not be negative"
+}
+```
+
+> HTTP Status Code: 400
+
+```json
+{
+    "status": "error",
+    "message": "Invalid account_identifier "
+}
+```
+
+This API updates an balance object attributes
+
+`PATCH balanceservice/v1/balance/{account_identifier}/`
+
+### Arguments
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>topup_amount (optional)</td>
+            <td>If included, balance_topup field will be overwritten by new value. Should not be negative
+            </td>
+        </tr>
+        <tr>
+            <td>threshold_amount (optional)</td>
+            <td>Please include this field if it needs to be replaced. if balance goes below threshold amount event will be triggered for low balance
+            </td>
+        </tr>
+        <tr>
+            <td>status (optional)</td>
+            <td>Please include this field if balance need to be suspended. Possible values of status could be <code>suspended</code>
+            </td>
+        </tr>
+        <tr>
+            <td>balance_tag (optional)</td>
+            <td>Balance can be tagged. Preferably by prepaid or postpaid tags. Length Limit(1-50). Greater length will
+            be trimmed
+            </td>
+        </tr>
+        <tr>
+            <td>amount (optional)</td>
+            <td> Balance amount. Balance amount will be overwritten by new value. Please be careful while sending this parameter.
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+## Events
+
+Multiple URLs can be configured. All  generated events will be notified on all of configured urls.
+Events firing will be asynchronus and after 500ms the connection will be closed.
+
+### Event Description
+
+<table>
+    <thead>
+        <tr>
+            <th>Event Type</th>
+            <th>Scenario</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>balance_topup </td>
+            <td> If <code>amount</code> goes below <code>threshold_amount</code> this event will be triggered.
+            </td>
+        </tr>
+        <tr>
+            <td>debit</td>
+            <td> In case of balance debit this event will be triggered with event_status as <code>success</code> or <code>fail</code> depending if debit was success or failure
+            </td>
+        </tr>
+        <tr>
+            <td>credit</td>
+            <td>In case of balance credit this event will be triggered with event_status as <code>success</code> or <code>fail</code> depending if credit was success or failure
+            </td>
+        </tr>
+        <tr>
+            <td>negative_balance </td>
+            <td>This event will be triggered if balance amount becomes non positive.
+            </td>
+        </tr>
+
+    </tbody>
+</table>
+
+### Arguments
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>type (mandatory)</td>
+            <td> Following event types will be delivered. <code>balance_topup</code>, <code>debit</code>, <code>credit</code>, <code>negative_balance</code>
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>status (optional)</td>
+            <td> Event status can be <code>success</code> or <code>fail</code>. Field will only be sent for <code>debit</code>, <code>credit</code>.
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>balance </td>
+            <td> balance object.
+            </td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>meta (optional)</td>
+            <td>meta information gathered from the caller will be forwarded. This field will only be present if it has been sent by requester.
+            Meta will be a dict with three fields.
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Length limit</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+            <tbody>
+            <tr>
+                <td><code>source</code> </td> <td> 0-100</td> <td> This will give source information. Like machine detail </td>
+            </tr>
+            <tr>
+            <td> <code>event</code></td><td> 0-100</td>. <td>This will give event detail like auto_recharge or debit loop</td>
+            </tr>
+            <tr>
+            <td><code>message</code></td> <td>0-1000</td>  <td>Can contain extra information.</td>
+            </tr>
+            </tbody>
+            </table>
+            </td>
+        </tr>
+    </tbody>
+</table>
